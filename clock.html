@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Timezone Digital Clock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: white;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .clock-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .clock-card {
+            background: linear-gradient(135deg, #2d2d44 0%, #3d3d5c 100%);
+            border: 2px solid #00ff88;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            animation: pulse 3s infinite;
+        }
+
+        .clock-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.6);
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 136, 0.3); }
+            50% { box-shadow: 0 0 50px rgba(0, 255, 136, 0.6); }
+        }
+
+        .time-display {
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #00ff88;
+            margin: 20px 0;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+            font-family: 'Courier New', monospace;
+        }
+
+        .timezone-name {
+            font-size: 1.3em;
+            color: #88ffcc;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .timezone-offset {
+            font-size: 0.9em;
+            color: #00ff88;
+            opacity: 0.8;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 0, 0, 0.7);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 0, 0, 1);
+            transform: scale(1.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #00ff88;
+            margin: 0 0 10px 0;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+        }
+
+        .header p {
+            color: #88ffcc;
+            font-size: 1.1em;
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeIn 1.5s ease-in;
+        }
+
+        select {
+            padding: 12px 20px;
+            background: #2d2d44;
+            color: #00ff88;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        select:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        select:focus {
+            outline: none;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            color: #1e1e2e;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .no-clocks {
+            text-align: center;
+            color: #88ffcc;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .back-link a {
+            color: #00ff88;
+            text-decoration: none;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #00cc66;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-link">
+        <a href="index.html">← Back to SYNCT AI</a>
+    </div>
+
+    <div style="width: 100%; max-width: 1200px;">
+        <div class="header">
+            <h1>🕐 GLOBAL TIME ZONES</h1>
+            <p>Monitor time across the world in real-time</p>
+        </div>
+
+        <div class="controls">
+            <select id="timezoneSelect">
+                <option value="">Select a timezone...</option>
+                <option value="America/New_York">New York (EST/EDT)</option>
+                <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
+                <option value="America/Chicago">Chicago (CST/CDT)</option>
+                <option value="America/Denver">Denver (MST/MDT)</option>
+                <option value="America/Toronto">Toronto (EST/EDT)</option>
+                <option value="Europe/London">London (GMT/BST)</option>
+                <option value="Europe/Paris">Paris (CET/CEST)</option>
+                <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+                <option value="Europe/Moscow">Moscow (MSK)</option>
+                <option value="Asia/Dubai">Dubai (GST)</option>
+                <option value="Asia/Istanbul">Istanbul (EET/EEST)</option>
+                <option value="Asia/Kolkata">Mumbai (IST)</option>
+                <option value="Asia/Bangkok">Bangkok (ICT)</option>
+                <option value="Asia/Shanghai">Shanghai (CST)</option>
+                <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
+                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                <option value="Asia/Seoul">Seoul (KST)</option>
+                <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+                <option value="Pacific/Auckland">Auckland (NZDT/NZST)</option>
+                <option value="America/Sao_Paulo">São Paulo (BRT/BRST)</option>
+                <option value="America/Buenos_Aires">Buenos Aires (ART)</option>
+                <option value="America/Mexico_City">Mexico City (CST/CDT)</option>
+                <option value="Africa/Johannesburg">Johannesburg (SAST)</option>
+                <option value="Africa/Cairo">Cairo (EET)</option>
+                <option value="Africa/Lagos">Lagos (WAT)</option>
+                <option value="UTC">UTC (Coordinated Universal Time)</option>
+            </select>
+            <button onclick="addTimezone()">+ Add Timezone</button>
+        </div>
+
+        <div class="clock-container" id="clockContainer"></div>
+        <div id="noClocks" class="no-clocks" style="display: none;">
+            Add a timezone to get started! 👆
+        </div>
+    </div>
+
+    <script>
+        const clockData = [];
+
+        // Timezone names for display
+        const timezoneNames = {
+            'America/New_York': 'New York',
+            'America/Los_Angeles': 'Los Angeles',
+            'America/Chicago': 'Chicago',
+            'America/Denver': 'Denver',
+            'America/Toronto': 'Toronto',
+            'Europe/London': 'London',
+            'Europe/Paris': 'Paris',
+            'Europe/Berlin': 'Berlin',
+            'Europe/Moscow': 'Moscow',
+            'Asia/Dubai': 'Dubai',
+            'Asia/Istanbul': 'Istanbul',
+            'Asia/Kolkata': 'Mumbai',
+            'Asia/Bangkok': 'Bangkok',
+            'Asia/Shanghai': 'Shanghai',
+            'Asia/Hong_Kong': 'Hong Kong',
+            'Asia/Tokyo': 'Tokyo',
+            'Asia/Seoul': 'Seoul',
+            'Australia/Sydney': 'Sydney',
+            'Pacific/Auckland': 'Auckland',
+            'America/Sao_Paulo': 'São Paulo',
+            'America/Buenos_Aires': 'Buenos Aires',
+            'America/Mexico_City': 'Mexico City',
+            'Africa/Johannesburg': 'Johannesburg',
+            'Africa/Cairo': 'Cairo',
+            'Africa/Lagos': 'Lagos',
+            'UTC': 'UTC'
+        };
+
+        function addTimezone() {
+            const select = document.getElementById('timezoneSelect');
+            const timezone = select.value;
+
+            if (!timezone) {
+                alert('Please select a timezone');
+                return;
+            }
+
+            // Check if already added
+            if (clockData.find(c => c.timezone === timezone)) {
+                alert('This timezone is already added!');
+                return;
+            }
+
+            clockData.push({ timezone, id: Date.now() });
+            select.value = '';
+            updateClocks();
+        }
+
+        function removeTimezone(id) {
+            const index = clockData.findIndex(c => c.id === id);
+            if (index > -1) {
+                clockData.splice(index, 1);
+                updateClocks();
+            }
+        }
+
+        function getTimezoneOffset(timezone) {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', { timeZone: timezone });
+            const utcTime = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+            const tzTime = new Date(timeString);
+            const offset = (tzTime - utcTime) / (1000 * 60 * 60);
+            
+            const sign = offset >= 0 ? '+' : '';
+            const hours = Math.floor(Math.abs(offset));
+            const minutes = Math.round((Math.abs(offset) - hours) * 60);
+            
+            return `UTC${sign}${hours}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        function getTimeInTimezone(timezone) {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', {
+                timeZone: timezone,
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            return timeString;
+        }
+
+        function updateClocks() {
+            const container = document.getElementById('clockContainer');
+            const noClocks = document.getElementById('noClocks');
+
+            container.innerHTML = '';
+
+            if (clockData.length === 0) {
+                noClocks.style.display = 'block';
+                return;
+            }
+
+            noClocks.style.display = 'none';
+
+            clockData.forEach(clock => {
+                const time = getTimeInTimezone(clock.timezone);
+                const offset = getTimezoneOffset(clock.timezone);
+                const displayName = timezoneNames[clock.timezone] || clock.timezone;
+
+                const card = document.createElement('div');
+                card.className = 'clock-card';
+                card.innerHTML = `
+                    <button class="remove-btn" onclick="removeTimezone(${clock.id})">✕</button>
+                    <div class="time-display">${time}</div>
+                    <div class="timezone-name">${displayName}</div>
+                    <div class="timezone-offset">${offset}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Update clocks every second
+        setInterval(updateClocks, 1000);
+
+        // Initialize with default timezones
+        clockData.push(
+            { timezone: 'America/New_York', id: 1 },
+            { timezone: 'Europe/London', id: 2 },
+            { timezone: 'Asia/Tokyo', id: 3 }
+        );
+
+        updateClocks();
+    </script>
+</body>
+</html>
