@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNCT AI - Revenue Audit & Recovery Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { margin: 0; background-color: #0a0a0a; color: white; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+        .animate-pulse-custom { animation: pulse 2s infinite; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Icons
+        const BotIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+        );
+        const SearchIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        );
+        const AlertTriangleIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        );
+        const TrendingUpIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+        );
+        const CheckCircleIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        );
+        const XCircleIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        );
+        const SettingsIcon = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m3.08-3.08l4.24-4.24M19.78 19.78l-4.24-4.24m-3.08-3.08l-4.24-4.24"></path></svg>
+        );
+
+        function App() {
+            const [target, setTarget] = useState('');
+            const [instagram, setInstagram] = useState('');
+            const [appState, setAppState] = useState('idle');
+            const [scanProgress, setScanProgress] = useState(0);
+            const [scanText, setScanText] = useState('Initializing scan...');
+            const [auditData, setAuditData] = useState(null);
+            const [email, setEmail] = useState('');
+            const [formStatus, setFormStatus] = useState('idle');
+            const [adminOpen, setAdminOpen] = useState(false);
+            const [adminPassword, setAdminPassword] = useState('');
+            const [adminUnlocked, setAdminUnlocked] = useState(false);
+            const [businessConfig, setBusinessConfig] = useState({
+                email: 'synctai4@gmail.com',
+                phone: '+1-800-SYNCT-AI',
+                businessName: 'SYNCT AI'
+            });
+            const [aiSystems, setAiSystems] = useState({
+                email: false,
+                phone: false,
+                chatbot: false,
+                crm: false
+            });
+
+            const toggleAiSystem = (system) => {
+                setAiSystems(prev => ({ ...prev, [system]: !prev[system] }));
+            };
+
+            const startScan = (e) => {
+                e.preventDefault();
+                if (!target) return;
+                setAppState('scanning');
+                setScanProgress(0);
+            };
+
+            useEffect(() => {
+                if (appState !== 'scanning') return;
+
+                const messages = [
+                    "Analyzing website infrastructure...",
+                    "Checking for email automation...",
+                    `Email automation: ${aiSystems.email ? '✓ FOUND' : '✗ MISSING (+25% Friction)'}`,
+                    "Scanning for AI phone systems...",
+                    `AI Phone receptionist: ${aiSystems.phone ? '✓ FOUND' : '✗ MISSING (+25% Friction)'}`,
+                    "Detecting chatbot/messaging AI...",
+                    `ChatBot/WhatsApp AI: ${aiSystems.chatbot ? '✓ FOUND' : '✗ MISSING (+25% Friction)'}`,
+                    "Analyzing CRM integration...",
+                    `CRM Integration: ${aiSystems.crm ? '✓ FOUND' : '✗ MISSING (+25% Friction)'}`,
+                    "Calculating revenue leakage...",
+                    "Compiling final audit report..."
+                ];
+
+                let currentStep = 0;
+                const interval = setInterval(() => {
+                    currentStep++;
+                    setScanProgress((prev) => Math.min(prev + 9, 100));
+                    
+                    if (currentStep < messages.length) {
+                        setScanText(messages[currentStep]);
+                    } else {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            generateAuditData();
+                            setAppState('results');
+                        }, 500);
+                    }
+                }, 600);
+
+                return () => clearInterval(interval);
+            }, [appState, aiSystems]);
+
+            const generateAuditData = () => {
+                const missingCount = Object.values(aiSystems).filter(v => !v).length;
+                const baseScore = 40;
+                const frictionPerMissing = 15;
+                const frictionScore = baseScore + (missingCount * frictionPerMissing);
+                
+                const trafficEstimate = Math.floor(Math.random() * 5000) + 1000;
+                const dropOffRate = 0.82;
+                const lostLeads = Math.floor(trafficEstimate * (missingCount / 4) * dropOffRate);
+                const avgLeadValue = 250;
+                
+                const monthlyLoss = lostLeads * avgLeadValue;
+                const breakEvenDays = Math.round(1200 / (monthlyLoss / 30));
+                
+                setAuditData({
+                    frictionScore: Math.min(frictionScore, 95),
+                    lostLeadsPerMonth: lostLeads,
+                    revenueLost: monthlyLoss.toLocaleString(),
+                    projectedGain: (monthlyLoss * 0.9).toLocaleString(),
+                    missingCount: missingCount,
+                    breakEvenDays: breakEvenDays
+                });
+            };
+
+            const handleBooking = (e) => {
+                e.preventDefault();
+                setFormStatus('loading');
+                setTimeout(() => {
+                    setFormStatus('success');
+                    console.log(`Email from: ${email}, sent to: ${businessConfig.email}`);
+                }, 1500);
+            };
+
+            const handleAdminLogin = () => {
+                if (adminPassword === '1234') {
+                    setAdminUnlocked(true);
+                    setAdminPassword('');
+                } else {
+                    alert('Wrong password!');
+                }
+            };
+
+            const updateBusinessConfig = () => {
+                setAdminOpen(false);
+                alert('Settings saved!');
+            };
+
+            const logoClick = () => {
+                setAdminOpen(!adminOpen);
+                setAdminUnlocked(false);
+                setAdminPassword('');
+            };
+
+            return (
+                <div className="min-h-screen pb-20">
+                    {/* Admin Panel Modal */}
+                    {adminOpen && (
+                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                            <div className="bg-[#111] border-2 border-emerald-500 rounded-3xl p-8 max-w-md w-full">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-2xl font-bold text-emerald-400">Admin Control Panel</h2>
+                                    <button onClick={() => setAdminOpen(false)} className="text-gray-400 hover:text-white text-2xl">✕</button>
+                                </div>
+
+                                {!adminUnlocked ? (
+                                    <div className="space-y-4">
+                                        <p className="text-gray-300">Enter password to access admin controls</p>
+                                        <input
+                                            type="password"
+                                            value={adminPassword}
+                                            onChange={(e) => setAdminPassword(e.target.value)}
+                                            placeholder="Enter password"
+                                            className="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:border-emerald-500"
+                                            onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+                                        />
+                                        <button onClick={handleAdminLogin} className="w-full bg-emerald-500 text-black font-bold py-3 rounded-lg hover:bg-emerald-600">
+                                            Unlock
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="text-emerald-400 text-sm font-bold">Business Email</label>
+                                            <input
+                                                type="email"
+                                                value={businessConfig.email}
+                                                onChange={(e) => setBusinessConfig({...businessConfig, email: e.target.value})}
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white mt-2 focus:outline-none focus:border-emerald-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-emerald-400 text-sm font-bold">Business Phone</label>
+                                            <input
+                                                type="tel"
+                                                value={businessConfig.phone}
+                                                onChange={(e) => setBusinessConfig({...businessConfig, phone: e.target.value})}
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white mt-2 focus:outline-none focus:border-emerald-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-emerald-400 text-sm font-bold">Business Name</label>
+                                            <input
+                                                type="text"
+                                                value={businessConfig.businessName}
+                                                onChange={(e) => setBusinessConfig({...businessConfig, businessName: e.target.value})}
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white mt-2 focus:outline-none focus:border-emerald-500"
+                                            />
+                                        </div>
+                                        <button onClick={updateBusinessConfig} className="w-full bg-emerald-500 text-black font-bold py-3 rounded-lg hover:bg-emerald-600">
+                                            Save & Close
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Navigation */}
+                    <nav className="flex items-center justify-between px-6 py-6 max-w-6xl mx-auto">
+                        <div className="flex items-center gap-2 cursor-pointer" onClick={logoClick}>
+                            <BotIcon className="w-6 h-6 text-emerald-400" />
+                            <span className="font-bold text-xl tracking-tight">SYNCT</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-medium text-gray-400">Enterprise AI Infrastructure</span>
+                            <a href="clock.html" className="text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-bold">🕐 Global Clock</a>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-6xl mx-auto px-6">
+                        {/* STATE 1: IDLE */}
+                        {appState === 'idle' && (
+                            <div className="mt-20 md:mt-32 text-center animate-fade-in">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-sm text-red-400 mb-8">
+                                    <AlertTriangleIcon className="w-4 h-4" />
+                                    Manual operations are leaking revenue.
+                                </div>
+                                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight mb-6">
+                                    Find out exactly how much <br className="hidden md:block"/>
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">money you are losing.</span>
+                                </h1>
+                                <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-12">
+                                    Enter your business details. Our AI audit will detect missing automation systems and show the exact revenue leakage.
+                                </p>
+
+                                {/* AI Systems Selection */}
+                                <div className="max-w-2xl mx-auto bg-[#111] border border-gray-800 rounded-3xl p-8 mb-12">
+                                    <h3 className="text-xl font-bold mb-6 text-emerald-400">Which AI systems do you currently have?</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {[
+                                            { key: 'email', label: '📧 Email Automation' },
+                                            { key: 'phone', label: '☎️ 24/7 AI Phone Agent' },
+                                            { key: 'chatbot', label: '💬 ChatBot/WhatsApp AI' },
+                                            { key: 'crm', label: '🔄 CRM Integration' }
+                                        ].map(system => (
+                                            <label key={system.key} className="flex items-center gap-3 p-4 bg-black rounded-xl border-2 border-gray-800 cursor-pointer hover:border-emerald-500 transition-all">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={aiSystems[system.key]}
+                                                    onChange={() => toggleAiSystem(system.key)}
+                                                    className="w-5 h-5 accent-emerald-400"
+                                                />
+                                                <span className="text-gray-300">{system.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <form onSubmit={startScan} className="max-w-xl mx-auto space-y-4">
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <SearchIcon className="h-5 w-5 text-gray-500" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={target}
+                                            onChange={(e) => setTarget(e.target.value)}
+                                            placeholder="e.g., yourclinic.com"
+                                            className="block w-full pl-12 pr-4 py-5 bg-black border-2 border-gray-800 rounded-2xl text-lg focus:ring-0 focus:border-emerald-500 transition-colors text-white placeholder-gray-600 outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <SearchIcon className="h-5 w-5 text-gray-500" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={instagram}
+                                            onChange={(e) => setInstagram(e.target.value)}
+                                            placeholder="e.g., @yourbusiness (optional)"
+                                            className="block w-full pl-12 pr-4 py-5 bg-black border-2 border-gray-800 rounded-2xl text-lg focus:ring-0 focus:border-emerald-500 transition-colors text-white placeholder-gray-600 outline-none"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-white text-black font-bold px-6 py-5 rounded-2xl hover:bg-gray-200 transition-colors"
+                                    >
+                                        Run Free Audit
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* STATE 2: SCANNING */}
+                        {appState === 'scanning' && (
+                            <div className="mt-32 max-w-2xl mx-auto text-center animate-fade-in">
+                                <div className="relative w-32 h-32 mx-auto mb-8">
+                                    <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20"></div>
+                                    <div className="absolute inset-0 rounded-full border-t-2 border-emerald-400 animate-[spin_1s_linear_infinite]"></div>
+                                    <BotIcon className="absolute inset-0 m-auto w-10 h-10 text-emerald-400 animate-pulse-custom" />
+                                </div>
+                                <h2 className="text-2xl font-bold mb-2">Auditing: {target}</h2>
+                                <p className="text-emerald-400 font-mono text-sm mb-8 h-6">{scanText}</p>
+                                <div className="w-full bg-gray-900 rounded-full h-2 mb-4 overflow-hidden">
+                                    <div 
+                                        className="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-300 ease-out"
+                                        style={{ width: `${scanProgress}%` }}
+                                    ></div>
+                                </div>
+                                <p className="text-gray-500 text-xs font-mono">{Math.floor(scanProgress)}% Complete</p>
+                            </div>
+                        )}
+
+                        {/* STATE 3: RESULTS */}
+                        {appState === 'results' && auditData && (
+                            <div className="mt-12 animate-fade-in">
+                                <div className="text-center mb-12">
+                                    <h2 className="text-3xl font-bold mb-2">Audit Complete for <span className="text-emerald-400">{target}</span></h2>
+                                    <p className="text-gray-400">{auditData.missingCount} critical systems missing - Revenue is leaking!</p>
+                                </div>
+
+                                {/* Results Grid */}
+                                <div className="grid md:grid-cols-3 gap-6 mb-12">
+                                    <div className="bg-[#111] border border-red-500/30 p-8 rounded-3xl">
+                                        <h3 className="text-gray-400 font-semibold mb-2">Friction Score</h3>
+                                        <div className="flex items-baseline gap-2 mb-2">
+                                            <span className="text-6xl font-black text-red-500">{auditData.frictionScore}%</span>
+                                            <span className="text-red-400 text-sm font-bold">CRITICAL</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500">{auditData.missingCount} missing AI systems driving leads away</p>
+                                    </div>
+
+                                    <div className="bg-[#111] border border-orange-500/30 p-8 rounded-3xl">
+                                        <h3 className="text-gray-400 font-semibold mb-2">Monthly Revenue Loss</h3>
+                                        <div className="text-5xl font-black text-white mb-2">${auditData.revenueLost}</div>
+                                        <p className="text-sm text-gray-500">~{auditData.lostLeadsPerMonth} leads/month abandoned</p>
+                                    </div>
+
+                                    <div className="bg-gradient-to-br from-emerald-900/40 to-[#111] border border-emerald-500/30 p-8 rounded-3xl">
+                                        <h3 className="text-emerald-400 font-semibold mb-2 flex items-center gap-2">
+                                            <TrendingUpIcon className="w-5 h-5" /> Recovery w/ SYNCT
+                                        </h3>
+                                        <div className="text-5xl font-black text-emerald-400 mb-2">+${auditData.projectedGain}</div>
+                                        <p className="text-sm text-emerald-100/70">Break-even: {auditData.breakEvenDays} days</p>
+                                    </div>
+                                </div>
+
+                                {/* Missing Systems */}
+                                <div className="max-w-3xl mx-auto bg-[#111] border border-gray-800 rounded-3xl p-8 mb-16">
+                                    <h3 className="text-xl font-bold mb-6 border-b border-gray-800 pb-4">System Status Report</h3>
+                                    <div className="space-y-4">
+                                        {[
+                                            { key: 'email', label: 'Email Automation', icon: '📧' },
+                                            { key: 'phone', label: '24/7 AI Phone Receptionist', icon: '☎️' },
+                                            { key: 'chatbot', label: 'ChatBot/WhatsApp AI', icon: '💬' },
+                                            { key: 'crm', label: 'CRM Integration', icon: '🔄' }
+                                        ].map(system => (
+                                            <div key={system.key} className={`flex items-center justify-between p-4 rounded-xl border ${aiSystems[system.key] ? 'bg-emerald-950/30 border-emerald-900/50' : 'bg-black border-red-900/50'}`}>
+                                                <div className="flex items-center gap-3">
+                                                    {aiSystems[system.key] ? (
+                                                        <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
+                                                    ) : (
+                                                        <XCircleIcon className="w-5 h-5 text-red-500" />
+                                                    )}
+                                                    <span className="font-medium">{system.icon} {system.label}</span>
+                                                </div>
+                                                <span className={`text-sm font-mono ${aiSystems[system.key] ? 'text-emerald-400' : 'text-red-500'}`}>
+                                                    {aiSystems[system.key] ? 'Active' : 'Missing'}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Pricing Section */}
+                                <div className="max-w-3xl mx-auto bg-gradient-to-br from-emerald-900/20 to-[#111] border-2 border-emerald-500/50 rounded-3xl p-12 mb-16">
+                                    <div className="text-center mb-8">
+                                        <h3 className="text-3xl font-bold mb-2">SYNCT Premium Plan</h3>
+                                        <p className="text-emerald-400 text-lg">Everything you need to recover lost revenue</p>
+                                    </div>
+
+                                    <div className="bg-[#111] border border-emerald-500/30 rounded-2xl p-8 mb-8">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-xl font-bold">Monthly Investment</span>
+                                            <span className="text-4xl font-black text-emerald-400">$1,200</span>
+                                        </div>
+                                        <div className="border-t border-gray-800 pt-4 mt-4 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-gray-300">Your Monthly Loss</span>
+                                                <span className="font-bold">${auditData.revenueLost}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-emerald-400">
+                                                <span className="text-gray-300">SYNCT Recovery</span>
+                                                <span className="font-bold">+${auditData.projectedGain}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between bg-emerald-500/20 p-3 rounded-lg border border-emerald-500/50">
+                                                <span className="font-bold">Net Monthly Gain</span>
+                                                <span className="text-2xl font-black text-emerald-400">
+                                                    ${Math.max(0, parseInt(auditData.projectedGain.replace(/,/g, '')) - 1200).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div className="text-center pt-4 border-t border-gray-800">
+                                                <p className="text-emerald-400 font-bold">⚡ Pays for itself in {auditData.breakEvenDays} days</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-4 mb-8">
+                                        <div className="bg-black p-4 rounded-xl border border-gray-800">
+                                            <h4 className="font-bold mb-3 flex items-center gap-2">✅ Included Features</h4>
+                                            <ul className="space-y-2 text-sm text-gray-300">
+                                                <li>• 24/7 AI Voice Receptionist</li>
+                                                <li>• WhatsApp & DM Automation</li>
+                                                <li>• AI Lead Qualification</li>
+                                                <li>• Full CRM Integration</li>
+                                                <li>• Weekly Performance Reports</li>
+                                                <li>• Dedicated AI Engineer</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-black p-4 rounded-xl border border-gray-800">
+                                            <h4 className="font-bold mb-3 flex items-center gap-2">🎯 Your Benefits</h4>
+                                            <ul className="space-y-2 text-sm text-gray-300">
+                                                <li>• Never miss a lead again</li>
+                                                <li>• 24/7 customer engagement</li>
+                                                <li>• 90%+ lead recovery rate</li>
+                                                <li>• Instant implementation</li>
+                                                <li>• No setup fees</li>
+                                                <li>• Cancel anytime</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Booking Form */}
+                                <div className="max-w-md mx-auto text-center bg-gradient-to-br from-white to-gray-100 text-black p-10 rounded-3xl shadow-2xl">
+                                    <h3 className="text-2xl font-bold mb-3">Stop the bleeding.</h3>
+                                    <p className="text-gray-600 mb-8 text-sm font-medium">
+                                        Enter your email to schedule a setup call with our team.
+                                    </p>
+                                    <form onSubmit={handleBooking} className="flex flex-col gap-3">
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="your@email.com"
+                                            required
+                                            disabled={formStatus === 'loading' || formStatus === 'success'}
+                                            className="w-full px-4 py-4 rounded-xl bg-white border-2 border-gray-300 focus:outline-none focus:border-black text-black font-medium"
+                                        />
+                                        <button 
+                                            type="submit"
+                                            disabled={formStatus === 'loading' || formStatus === 'success'}
+                                            className={`w-full font-bold py-4 rounded-xl transition-all duration-300 ${
+                                                formStatus === 'success' 
+                                                    ? 'bg-emerald-500 text-white' 
+                                                    : 'bg-black text-white hover:bg-gray-800'
+                                            } disabled:opacity-70`}
+                                        >
+                                            {formStatus === 'idle' && 'Book Free Consultation'}
+                                            {formStatus === 'loading' && 'Processing...'}
+                                            {formStatus === 'success' && `✓ Sent to ${businessConfig.email}`}
+                                        </button>
+                                    </form>
+                                    <button 
+                                        onClick={() => setAppState('idle')}
+                                        className="mt-6 text-xs text-gray-500 hover:text-gray-700 underline w-full"
+                                    >
+                                        Run another audit
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
